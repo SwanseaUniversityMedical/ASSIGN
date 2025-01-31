@@ -90,6 +90,6 @@ yottadb -run SETUP^UPRNHOOK2  # UPRN retrieval
 yottadb -run ^NEL             # request handling
 yottadb -run ^ADDWEBAUTH      # Add creds
 
-# Startup webgui
+# Startup webgui.
 echo "Starting YottaDB GUI endpoint"
 yottadb -run %ydbgui --readwrite --port 9080 >>/data/logs/%ydbgui.log
