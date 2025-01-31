@@ -18,15 +18,19 @@ else
 fi
 
 # Check if ASSIGN needs pulling
+echo $assign_sha
+if [ -z "${assign_sha}" ]; then
+  echo "ASSIGN Version: Current main"
+else
+  echo "ASSIGN Version: $assign_sha"
+fi
+
 if [ ! -d "$assign_dest" ]; then
   echo "Obtaining ASSIGN routines."
 
   # Clone the wanted sha from github
-    if [ -z "${assign_sha}" ]; then
-      git clone $assign_url $assign_dest --depth 1
-    else
-      git clone $assign_url $assign_dest --depth 1 --branch $assign_sha
-    fi
+  git clone $assign_url $assign_dest
+  git -C $assign_dest checkout $assign_sha
 
   # Put the routines to the YottaDB routines directory
   echo "Moving the routines."
@@ -50,20 +54,24 @@ $ydb_dist/mupip set -journal=off -region DEFAULT #&& \
 # Do data ingest, look at checksum for "$ydb_dir/$ydb_rel/g/yottadb.gld"
 export checksum_loc=/data/import_checksum
 if [ ! -f "/data/import_checksum" ]; then
+  # Checksum doesn't exist, so we want to import our data
   echo "Ingesting ABP from $abp_dir"
-  $ydb_dist/ydb -run %XCMD 'd IMPORT^UPRN1A("/data/ABP")'
-  echo "Producing checksum for $ydb_gbldir"
-  sha256sum $ydb_gbldir | awk '{ print $1 }' > $checksum_loc
-  cat /data/import_checksum
+  $ydb_dist/ydb -run %XCMD 'd IMPORT^UPRN1A("/data/ABP")' && echo "Ingest okay. Producing checksum for $ydb_gbldir" && sha256sum $ydb_gbldir | awk '{ print $1 }' > $checksum_loc && cat /data/import_checksum
 else
-  echo "Get checksums"
+  # Checksum exists, so we want to compare it to the checksum of the current yottadb.gld
+  echo "Getting existing checksums"
   prev_checksum=$(cat $checksum_loc)
   cur_checksum=$(shasum -a 256 $ydb_gbldir | awk '{ print $1 }')
   echo "Previous checksum: $prev_checksum"
   echo "Current checksum: $cur_checksum"
   if [[ $prev_checksum != $cur_checksum ]]; then
+    # Checksums do not match. We want to figure out if a reload is needed.
+    # TODO: handle the mismatched checksum logic. Do we want to re-import data (long) or just copy over database from somewhere?
     echo "Reproducing checksum for $ydb_gbldir"
     sha256sum $ydb_gbldir | awk '{ print $1 }' > $checksum_loc
+  else
+    # Checksums match, nothing to do.
+    echo "Checksums match."
   fi
 fi
 
