@@ -2,7 +2,7 @@
 
 Repo to allow easy deployment of ASSIGN (https://github.com/endeavourhealth-discovery/ASSIGN) via a docker container. 
 
-The Dockerfile creates an image with YottaDB set up for running the ASSIGN code.
+Dockerfile creates an image with YottaDB set up for running the ASSIGN code.
 
 On `docker run` it will ask the user for the repo URL, installation path, and commit sha for the repo. Defaults are provided:
 * `assign_url="https://github.com/endeavourhealth-discovery/ASSIGN.git"`
