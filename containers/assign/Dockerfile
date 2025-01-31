@@ -53,9 +53,6 @@ RUN chmod +x /assign-startup.sh
 COPY startup_scripts/ADDWEBAUTH.m /extra_scripts/ADDWEBAUTH.m
 RUN chmod 644 /extra_scripts/ADDWEBAUTH.m
 
-# Add in dummy data to test
-COPY startup_scripts/ABP_dummy /ABP_DUMMY
-
 # Expose port for YottaDB GUI
 EXPOSE 9080
 EXPOSE 9081
