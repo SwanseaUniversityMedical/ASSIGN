@@ -13,8 +13,7 @@ RUN apt-get update && apt-get install -y git
 # ASSIGN install env vars
 ENV assign_url="https://github.com/endeavourhealth-discovery/ASSIGN.git"
 ENV assign_dest="/data/ASSIGN"
-ARG assign_sha=""
-ENV assign_sha=$assign_sha
+ENV assign_sha=""
 ENV abp_dir="/data/ABP"
 
 # YDB env vars

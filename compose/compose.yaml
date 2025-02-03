@@ -1,6 +1,8 @@
 services:
   db:
-    image: harbor.ukserp.ac.uk/linkage/assign:pr-8
+    image: assign-test-master:latest
+    environment:
+      assign_sha: ""
     ports:
       - "9080:9080"
       - "9081:9081"

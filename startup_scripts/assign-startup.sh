@@ -18,26 +18,38 @@ else
 fi
 
 # Check if ASSIGN needs pulling
-echo $assign_sha
-if [ -z "${assign_sha}" ]; then
-  echo "ASSIGN Version: Current main"
-else
-  echo "ASSIGN Version: $assign_sha"
+if [ "$assign_sha" == "" ]; then
+  echo "Given sha was empty, using HEAD of $assign_url:"
+  assign_sha=$(git ls-remote $assign_url HEAD | cut -f1 | cut -c1-7)
+  echo "New value for assign_sha is $assign_sha. Matching remote HEAD sha."
 fi
 
-if [ ! -d "$assign_dest" ]; then
-  echo "Obtaining ASSIGN routines."
+if [[ -d "$assign_dest" && "$assign_sha" == $(git -C $assign_dest rev-parse --short HEAD) ]]; then
+  # Exists and matches
+  echo "Previous ASSIGN installation found matching current sha. No need to change ASSIGN."
+else
+  # Check if exists, get it if not
+  if [ ! -d "$assign_dest" ]; then
+    echo "ASSIGN not previously installed. Obtaining ASSIGN routines." && git clone $assign_url $assign_dest
+  else
+    # Check if wanted sha exists in current clone
+    echo "Current version of sha does not match that requested. Will re-install ASSIGN."
+    echo "Checking if wanted sha exists in current clone of repo."
+    if ! git -C $assign_dest cat-file -e $assign_sha^{commit}; then
+      echo "sha not found, pulling remote." && git -C $assign_dest reset --hard origin/master && git -C $assign_dest clean -fxd && git -C $assign_dest pull
+    else
+      echo "sha $assign_sha found, no need to pull."
+    fi
+  fi
 
-  # Clone the wanted sha from github
-  git clone $assign_url $assign_dest
+  # Checkout the wanted sha
+  echo "Checking out $assign_sha."
   git -C $assign_dest checkout $assign_sha
 
   # Put the routines to the YottaDB routines directory
   echo "Moving the routines."
   cp $assign_dest/UPRN/yottadb/* $ydb_dir/$ydb_rel/r
   cp $assign_dest/UPRN/codelists/* $abp_dir
-else
-  echo "$assign_dest already exists. Not cloning down ASSIGN again."
 fi
 
 # Perform zlink of routines, doesn't matter if already linked
@@ -52,7 +64,7 @@ $ydb_dist/mupip set -journal=off -region DEFAULT #&& \
 #$ydb_dist/mupip set -access_method=mm -region DEFAULT
 
 # Do data ingest, look at checksum for "$ydb_dir/$ydb_rel/g/yottadb.gld"
-export checksum_loc=/data/import_checksum
+checksum_loc=/data/import_checksum
 if [ ! -f "/data/import_checksum" ]; then
   # Checksum doesn't exist, so we want to import our data
   echo "Ingesting ABP from $abp_dir"
