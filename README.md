@@ -2,51 +2,59 @@
 
 Repo to allow easy deployment of ASSIGN (https://github.com/endeavourhealth-discovery/ASSIGN) via a docker container. 
 
-Dockerfile creates an image with YottaDB set up for running the ASSIGN code.
+Dockerfile creates an image with YottaDB set up for running the ASSIGN code and querying via api endpoint. 
 
-On `docker run` it will ask the user for the repo URL, installation path, and commit sha for the repo. Defaults are provided:
-* `assign_url="https://github.com/endeavourhealth-discovery/ASSIGN.git"`
-* `assign_dest="./ASSIGN"`
-* `sha=""`
+## Building the container
+Usual `docker build` applies:
 
-The default for sha provides the current master head of the repo. 
+`$ docker build -t <name>:<tag> -f ./containers/assign/Dockerfile .`
 
-Example:
-```
-Enter ASSIGN git repo url (https://github.com/endeavourhealth-discovery/ASSIGN.git):
-Enter ASSIGN install path (./ASSIGN):
-Enter ASSIGN commit sha ( ):
-Cloning into './ASSIGN'... 
-```
+There is an optional argument for `YDB_VERSION` which can allow the built image to use a different [image of YottaDB](https://hub.docker.com/r/yottadb/yottadb). 
+The default is `r2.01`. To change in the build process:
 
-## Usage
-When running the container, be sure to provide `docker run` with the following:
-* A port for the YottaDB GUI if you wish to access it from localhost.
-* A volume containing processed ABP csv files, which is then mounted to the container at `/data/ABP`. As a minimum, ASSIGN currently requires the following ABP files:
+`$ docker build --buld-arg YDB_VERSION=r2.01 -t <name>:<tag> -f ./containers/assign/Dockerfile .`
+
+## Providing address data
+The container requires the [ABP](https://www.ordnancesurvey.co.uk/products/addressbase-premium) data to be provided for import to the yotta database. 
+You must provide a volume containing the processed ABP csv files, which are then mounted to the container at `/data/ABP`. 
+At a minimum, ASSIGN currently requires the following ABP files:
   * __ID32_Class_Records.csv__
   * __ID28_DPA_Records.csv__
   * __ID24_LPI_Records.csv__
   * __ID21_BLPU_Records.csv__
   * __ID15_StreetDesc_Records.csv__
 
-Once in the container you will be at the YottaDB terminal. Load ABP into the database with `d ^UPRN1A`, you will then need to provide the path to the ABP data and confirm the load type:
-```
-YDB>d ^UPRN1A
+## Installing ASSIGN
+The container's startup script automatically installs the ASSIGN routines. 
+By default, the container uses the version of [ASSIGN](https://github.com/endeavourhealth-discovery/ASSIGN.git) available in the latest commit master.
 
-ABP folder () :/data/ABP
+An environment vairable `assign_sha` is provided, defining which version of ASSIGN to use. 
+The default `''` is expanded out to be the remote HEAD commit.
+A wanted sha can be provided by setting the `assign_sha` at run time, either long or short form.
 
-Full, addtional  or delta upload (F/D/A) ? :F
+## Running the container
+To run the container with the latest version of ASSIGN:
 
-You are about to delete the ABP data and replace it
+`docker run -v <local_abp_dir>:/data/ABP <name>:<tag>`
 
-Are you sure you wish to proceeed !!?y
-```
+ To specify a version of ASSIGN to install, provide the commit SHA via the environment variable `assign_sha`:
 
-This should then process ABP and ingest it into the appropriate globals for the ASSIGN routines to query.
+`docker run -e assign_sha=<sha> -v <local_abp_dir>:/data/ABP <name>:<tag>`
 
-## What deployment looks like
-A docker container running the yottaDB spun up. 
-Then responsible dev shells into container to import the ABP as above. 
-This container runs a web service listening for a TCP request. This request then uses the underlying mumps routine to query ASSIGN and provide the JSON response.
 
-Set up a container with a simple web server which allows a user to log in and make a request over TCP, this allows us to control routes of access via network rules.
+## Running the container with `docker compose`
+A docker compose is also provided, detailing volumes, ports, and the ASSIGN sha.
+
+## Usage
+On startup, the container will check to see if ASSIGN is present or the versions differ. 
+It will then pull down ASSIGN if needed and install the appropriate routines.
+
+It will check to see if ABP has been loaded before, or if the data has changed.
+If needed, it will begin loading ABP into the yotta database with the ASSIGN routine `d IMPORT^UPRN1A("/data/ABP")`.
+This step may take some time, but once complete it will create checksums for `/data/ABP` and the yotta database.
+
+Finally, it will start up two web services.
+* ASSIGN API endpoint, so that address strings can be queried via web requests.
+* YottaDB GUI, for database monitoring. 
+
+Monitor the ABP import, and once complete you should be able to query address strings against the database using the installed version of ASSIGN.
