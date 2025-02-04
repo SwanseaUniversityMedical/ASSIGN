@@ -73,6 +73,7 @@ function load_abp_to_assign {
   echo "Producing checksum for $abp_dir." && calc_abp_checksum > $abp_checksum
   }
 
+{
 # If either ABP checksum or YDB checksum are missing then we presume data hasn't been loaded previously.
 if [[ ! -f "$abp_checksum" || ! -f "$ydb_checksum" ]]; then
   if [ ! -f "$abp_checksum" ]; then echo "$abp_checksum is missing."; fi
@@ -104,6 +105,7 @@ yottadb -run INT^VUE          # File upload/download
 yottadb -run SETUP^UPRNHOOK2  # UPRN retrieval
 yottadb -run ^NEL             # request handling
 yottadb -run ^ADDWEBAUTH      # Add creds
+} &
 
 # Startup webgui.
 echo "Starting YottaDB GUI endpoint"
