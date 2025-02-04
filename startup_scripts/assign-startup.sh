@@ -19,7 +19,7 @@ fi
 
 # Check if ASSIGN needs pulling
 if [ "$assign_sha" == "" ]; then
-  echo "Given sha was empty, using HEAD of $assign_url:"
+  echo "Given sha was empty, using HEAD of $assign_url."
   assign_sha=$(git ls-remote $assign_url HEAD | cut -f1 | cut -c1-7)
   echo "New value for assign_sha is $assign_sha. Matching remote HEAD sha."
 fi
@@ -63,28 +63,31 @@ $ydb_dist/mupip set -extension_count=500000 -region DEFAULT && \
 $ydb_dist/mupip set -journal=off -region DEFAULT #&& \
 #$ydb_dist/mupip set -access_method=mm -region DEFAULT
 
-# Do data ingest, look at checksum for "$ydb_dir/$ydb_rel/g/yottadb.gld"
-checksum_loc=/data/import_checksum
-if [ ! -f "/data/import_checksum" ]; then
-  # Checksum doesn't exist, so we want to import our data
-  echo "Ingesting ABP from $abp_dir"
-  $ydb_dist/ydb -run %XCMD 'd IMPORT^UPRN1A("/data/ABP")' && echo "Ingest okay. Producing checksum for $ydb_gbldir" && sha256sum $ydb_gbldir | awk '{ print $1 }' > $checksum_loc && cat /data/import_checksum
+# Check if data needs loading
+function calc_abp_checksum { sha256sum $abp_dir/* | sha256sum | awk '{ print $1 }'; }
+function calc_ydb_checksum { sha256sum $ydb_gbldir | awk '{ print $1 }'; }
+
+function load_abp_to_assign {
+  echo "Importing ABP from $abp_dir." && $ydb_dist/ydb -run %XCMD 'd IMPORT^UPRN1A("/data/ABP")'
+  echo "Ingest okay. Producing checksum for $ydb_gbldir." && calc_ydb_checksum > $ydb_checksum && \
+  echo "Producing checksum for $abp_dir." && calc_abp_checksum > $abp_checksum
+  }
+
+# If either ABP checksum or YDB checksum are missing then we presume data hasn't been loaded previously.
+if [[ ! -f "$abp_checksum" || ! -f "$ydb_checksum" ]]; then
+  if [ ! -f "$abp_checksum" ]; then echo "$abp_checksum is missing."; fi
+  if [ ! -f "$ydb_checksum" ]; then echo "$ydb_checksum is missing."; fi
+  echo "A checksum for the data is missing. Reloading data."
+  load_abp_to_assign
+# else if the checksums don't match...
+elif [[ $(cat $abp_checksum) != $(calc_abp_checksum) || $(cat $ydb_checksum) != $(calc_ydb_checksum) ]]; then
+  echo "Prev ABP checksum: $(cat $abp_checksum)\nCurr ABP checksum: $(calc_abp_checksum)"
+  echo "Prev YDB checksum: $(cat $ydb_checksum)\nCurr YDB checksum: $(calc_ydb_checksum)"
+  echo "A checksum does not match. Reloading data."
+  load_abp_to_assign
+# else they match
 else
-  # Checksum exists, so we want to compare it to the checksum of the current yottadb.gld
-  echo "Getting existing checksums"
-  prev_checksum=$(cat $checksum_loc)
-  cur_checksum=$(shasum -a 256 $ydb_gbldir | awk '{ print $1 }')
-  echo "Previous checksum: $prev_checksum"
-  echo "Current checksum: $cur_checksum"
-  if [[ $prev_checksum != $cur_checksum ]]; then
-    # Checksums do not match. We want to figure out if a reload is needed.
-    # TODO: handle the mismatched checksum logic. Do we want to re-import data (long) or just copy over database from somewhere?
-    echo "Reproducing checksum for $ydb_gbldir"
-    sha256sum $ydb_gbldir | awk '{ print $1 }' > $checksum_loc
-  else
-    # Checksums match, nothing to do.
-    echo "Checksums match."
-  fi
+  echo "Checksums match, no need to reload."
 fi
 
 # Set the ybd env var for the TLS password hash, this can be replaced with an ENV var in the image?
