@@ -68,7 +68,7 @@ function calc_abp_checksum { sha256sum $abp_dir/* | sha256sum | awk '{ print $1 
 function calc_ydb_checksum { sha256sum $ydb_gbldir | awk '{ print $1 }'; }
 
 function load_abp_to_assign {
-  echo "Importing ABP from $abp_dir." && $ydb_dist/ydb -run %XCMD 'd IMPORT^UPRN1A("/data/ABP")'
+  echo "Importing ABP from $abp_dir." && $ydb_dist/ydb -run %XCMD 'd IMPORT^UPRN1A("/data/ABP")' && \
   echo "Ingest okay. Producing checksum for $ydb_gbldir." && calc_ydb_checksum > $ydb_checksum && \
   echo "Producing checksum for $abp_dir." && calc_abp_checksum > $abp_checksum
   }
