@@ -5,7 +5,7 @@ endpoint = 'http://localhost:9081'
 username = 'user'
 password = 'password'
 filepath = './'
-filename = 'test_in.tsv'
+filename = 'test_in.txt'
 processed_filename = 'test_out.txt'
 
 upload_url = f'{endpoint}/api2/fileupload2'

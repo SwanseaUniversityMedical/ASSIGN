@@ -109,4 +109,4 @@ yottadb -run ^ADDWEBAUTH      # Add creds
 
 # Startup webgui.
 echo "Starting YottaDB GUI endpoint"
-yottadb -run %ydbgui --readwrite --port 9080 >>/data/logs/%ydbgui.log
+yottadb -run %ydbgui --readwrite --port 9080 >> /data/logs/%ydbgui.log
