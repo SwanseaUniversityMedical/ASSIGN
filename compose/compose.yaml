@@ -1,0 +1,14 @@
+services:
+  db:
+    image: assign-test-master:latest
+    environment:
+      assign_sha: ""
+    ports:
+      - "9080:9080"
+      - "9081:9081"
+    volumes:
+      - type: volume
+        source: db-data
+        target: /data
+volumes:
+  db-data:
