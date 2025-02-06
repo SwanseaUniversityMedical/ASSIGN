@@ -1,0 +1,40 @@
+{{- if .Values.ydb.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ydb-data
+
+  annotations:
+    assign.ukserp.ac.uk/component: "ydb"
+    {{- with .Values.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.ydb.persistence.persistentVolumeClaim.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+
+  labels:
+    component: ydb
+    app: {{ .Chart.Name }}
+    release: {{ .Release.Name }}
+    chart: {{ include "assign.labels.chart" . }}
+    heritage: {{ .Release.Service }}
+    {{- with .Values.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.ydb.persistence.persistentVolumeClaim.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+
+spec:
+  volumeMode: Filesystem
+
+  storageClassName: {{ .Values.ydb.persistence.storageClassName }}
+
+  resources:
+    requests:
+      storage: {{ .Values.ydb.persistence.capacity }}
+
+  accessModes:
+    - ReadWriteOnce
+{{- end }}

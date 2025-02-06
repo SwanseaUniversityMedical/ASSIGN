@@ -10,6 +10,7 @@ export default {
         'deps',
         'assign',
         'assign-container',
+        'assign-chart',
     ]],
     'subject-case': [RuleConfigSeverity.Error, 'never', []],
   }

@@ -1,0 +1,31 @@
+
+ydb:
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "250m"
+    limits:
+      memory: "256Mi"
+      cpu: "500m"
+
+  env:
+    - name: LOG_LEVEL
+      value: "debug"
+
+  persistence:
+    storageClassName: ceph-filesystem
+    capacity: 1Gi
+
+ingress:
+  annotations:
+    cert-manager.io/cluster-issuer: "ca-issuer"
+  ingressClassName: "nginx-hiru"
+  host: "assign.dk.serp.ac.uk"
+  tls:
+    enabled: true
+    secretName: assign-tls-secret
+
+networkPolicy:
+  ingress:
+    matchLabels:
+      app.kubernetes.io/name: ingress-nginx

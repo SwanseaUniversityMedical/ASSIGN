@@ -1,0 +1,112 @@
+
+# Global annotations and labels applied to all manifests
+annotations: {}
+labels: {}
+
+ydb:
+  # Annotations and labels specific to the deployment
+  annotations: {}
+  labels: {}
+  # Annotations and labels specific to the pod
+  podAnnotations: {}
+  podLabels: {}
+
+  # Override the ydb container image
+  image:
+    # TODO replace with ydb container
+    repository: "alpine"
+    tag: "3.20.3"
+
+  # Port exposed by the ydb container
+  port: 9081
+
+  # Resource limits for the pods
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "250m"
+    limits:
+      memory: "256Mi"
+      cpu: "500m"
+
+  # Health probes for the pods
+  probes:
+    readiness:
+      enabled: true
+      path: "/"
+      initialDelaySeconds: 5
+      periodSeconds: 10
+    liveness:
+      enabled: true
+      path: "/"
+      initialDelaySeconds: 5
+      periodSeconds: 10
+
+  # Allow additional env vars from literals, configmaps, and secrets
+  env:
+    - name: LOG_LEVEL
+      value: "info"
+
+  persistence:
+    # Create and mount a pvc for the /data directory
+    enabled: true
+    persistentVolumeReclaimPolicy: Retain
+    storageClassName: standard
+    capacity: 1Gi
+
+    # Annotations and labels specific to the pv
+    persistentVolume:
+      annotations: {}
+      labels: {}
+
+    # Annotations and labels specific to the pvc
+    persistentVolumeClaim:
+      annotations: {}
+      labels: {}
+
+  # Allow additional volume mounts to be injected into the pod
+  extraVolumeMounts: []
+  extraVolumes: []
+
+  # Force the pod onto or away from certain nodes
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+service:
+  # Port exposed by the service
+  port: 8080
+  # Annotations specific to the service
+  annotations: {}
+  # Labels specific to the service
+  labels: {}
+
+ingress:
+  # Create an ingress to connect to the ydb pods via the service
+  enabled: true
+  # Annotations and labels specific to the ingress
+  annotations: {}
+  labels: {}
+  # Ingress controller
+  ingressClassName: "nginx"
+  # URL for the ingress to listen on
+  host: "assign.example.com"
+  # Configure the ingress to use tls
+  tls:
+    enabled: false
+    secretName: assign-tls-secret
+
+networkPolicy:
+  # Create a NetworkPolicy which only allows the ydb pods to be contacted via the ingress
+  enabled: true
+  # Annotations and labels specific to the network policy
+  annotations: {}
+  labels: {}
+
+  ingress:
+    # Pod labels to match the ingress controller pods already running on the cluster
+    matchLabels:
+      app.kubernetes.io/name: ingress-nginx
+
+# A list of strings that will be templated and then exported as individual manifests
+extraManifests: []

@@ -1,0 +1,130 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ydb
+
+  annotations:
+    assign.ukserp.ac.uk/component: "ydb"
+    {{- with .Values.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.ydb.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+
+  labels:
+    component: ydb
+    role: main
+    app: {{ .Chart.Name }}
+    release: {{ .Release.Name }}
+    chart: {{ include "assign.labels.chart" . }}
+    heritage: {{ .Release.Service }}
+    {{- with .Values.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.ydb.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+
+spec:
+
+  # Must be set to 1 for master ydb that will perform the ingest
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+      component: ydb
+
+  template:
+    metadata:
+      labels:
+        component: ydb
+        role: main
+        app: {{ .Chart.Name }}
+        release: {{ .Release.Name }}
+        {{- with .Values.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.ydb.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+
+      annotations:
+        assign.ukserp.ac.uk/component: "ydb"
+        {{- with .Values.annotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.ydb.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+
+    spec:
+      containers:
+      - name: ydb
+        image: "{{ .Values.ydb.image.repository }}:{{ .Values.ydb.image.tag }}"
+
+        ports:
+        - containerPort: {{ .Values.ydb.port }}
+
+        {{- with .Values.ydb.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+
+        {{- if .Values.ydb.probes.readiness.enabled }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.ydb.probes.readiness.path }}
+            port: {{ .Values.ydb.port }}
+          initialDelaySeconds: {{ .Values.ydb.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.ydb.probes.readiness.periodSeconds }}
+        {{- end }}
+
+        {{- if .Values.ydb.probes.liveness.enabled }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.ydb.probes.liveness.path }}
+            port: {{ .Values.ydb.port }}
+          initialDelaySeconds: {{ .Values.ydb.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.ydb.probes.liveness.periodSeconds }}
+        {{- end }}
+
+        {{- with .Values.ydb.env }}
+        env:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+
+        volumeMounts:
+          {{- if .Values.ydb.persistence.enabled }}
+          - name: data
+            mountPath: /data
+          {{- end }}
+          {{- with .Values.ydb.extraVolumeMounts }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+
+      volumes:
+        {{- if .Values.ydb.persistence.enabled }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: ydb-data
+        {{- end }}
+        {{- with .Values.ydb.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+
+      {{- with .Values.ydb.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.ydb.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.ydb.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
