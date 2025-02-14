@@ -16,7 +16,7 @@ ENV assign_dest="/data/ASSIGN"
 ENV assign_sha=""
 ENV abp_dir="/data/ABP"
 ENV abp_checksum="/data/abp_checksum"
-ENV ydb_checksum="/data/ydb_checksum"
+ENV ydb_checkfile="/data/ydb_checkfile"
 
 # YDB env vars
 ARG YDB_VERSION
