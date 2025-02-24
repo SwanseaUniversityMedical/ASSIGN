@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ydb
+  name: assign
 
   annotations:
     assign.ukserp.ac.uk/component: "ydb"
@@ -37,5 +37,5 @@ spec:
   ports:
     - name: http
       port: {{ .Values.service.port }}
-      targetPort: {{ .Values.ydb.port }}
+      targetPort: {{ .Values.assign.port }}
       protocol: TCP

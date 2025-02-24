@@ -1,15 +1,15 @@
-{{- if .Values.ydb.persistence.enabled }}
+{{- if .Values.assign.persistence.enabled }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: ydb-data
+  name: assign-data
 
   annotations:
     assign.ukserp.ac.uk/component: "ydb"
     {{- with .Values.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    {{- with .Values.ydb.persistence.persistentVolumeClaim.annotations }}
+    {{- with .Values.assign.persistence.persistentVolumeClaim.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 
@@ -22,18 +22,18 @@ metadata:
     {{- with .Values.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    {{- with .Values.ydb.persistence.persistentVolumeClaim.labels }}
+    {{- with .Values.assign.persistence.persistentVolumeClaim.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 
 spec:
   volumeMode: Filesystem
 
-  storageClassName: {{ .Values.ydb.persistence.storageClassName }}
+  storageClassName: {{ .Values.assign.persistence.storageClassName }}
 
   resources:
     requests:
-      storage: {{ .Values.ydb.persistence.capacity }}
+      storage: {{ .Values.assign.persistence.capacity }}
 
   accessModes:
     - ReadWriteOnce

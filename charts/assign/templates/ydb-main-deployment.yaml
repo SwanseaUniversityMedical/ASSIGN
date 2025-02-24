@@ -1,14 +1,14 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ydb
+  name: assign
 
   annotations:
     assign.ukserp.ac.uk/component: "ydb"
     {{- with .Values.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    {{- with .Values.ydb.annotations }}
+    {{- with .Values.assign.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 
@@ -22,7 +22,7 @@ metadata:
     {{- with .Values.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    {{- with .Values.ydb.labels }}
+    {{- with .Values.assign.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 
@@ -46,7 +46,7 @@ spec:
         {{- with .Values.labels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-        {{- with .Values.ydb.podLabels }}
+        {{- with .Values.assign.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
 
@@ -55,76 +55,95 @@ spec:
         {{- with .Values.annotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-        {{- with .Values.ydb.podAnnotations }}
+        {{- with .Values.assign.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
 
     spec:
+      {{- with .Values.assign.image.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
       containers:
       - name: ydb
-        image: "{{ .Values.ydb.image.repository }}:{{ .Values.ydb.image.tag }}"
+        image: "{{ .Values.assign.image.repository }}:{{ .Values.assign.image.tag }}"
+
 
         ports:
-        - containerPort: {{ .Values.ydb.port }}
+        - containerPort: {{ .Values.assign.port }}
 
-        {{- with .Values.ydb.resources }}
+        {{- with .Values.assign.resources }}
         resources:
           {{- toYaml . | nindent 10 }}
         {{- end }}
 
-        {{- if .Values.ydb.probes.readiness.enabled }}
+        {{- if .Values.assign.probes.readiness.enabled }}
         readinessProbe:
           httpGet:
-            path: {{ .Values.ydb.probes.readiness.path }}
-            port: {{ .Values.ydb.port }}
-          initialDelaySeconds: {{ .Values.ydb.probes.readiness.initialDelaySeconds }}
-          periodSeconds: {{ .Values.ydb.probes.readiness.periodSeconds }}
+            path: {{ .Values.assign.probes.readiness.path }}
+            port: {{ .Values.assign.port }}
+          initialDelaySeconds: {{ .Values.assign.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.assign.probes.readiness.periodSeconds }}
         {{- end }}
 
-        {{- if .Values.ydb.probes.liveness.enabled }}
+        {{- if .Values.assign.probes.liveness.enabled }}
         livenessProbe:
           httpGet:
-            path: {{ .Values.ydb.probes.liveness.path }}
-            port: {{ .Values.ydb.port }}
-          initialDelaySeconds: {{ .Values.ydb.probes.liveness.initialDelaySeconds }}
-          periodSeconds: {{ .Values.ydb.probes.liveness.periodSeconds }}
+            path: {{ .Values.assign.probes.liveness.path }}
+            port: {{ .Values.assign.port }}
+          initialDelaySeconds: {{ .Values.assign.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.assign.probes.liveness.periodSeconds }}
         {{- end }}
 
-        {{- with .Values.ydb.env }}
         env:
+          - name: LOG_LEVEL
+            value: "debug"
+          {{- with .Values.assign.sha }}
+          - name: assign_sha
+            value: "{{ . }}"
+          {{- end }}
+          {{- with .Values.assign.env }}
           {{- toYaml . | nindent 10 }}
-        {{- end }}
+          {{- end }}
 
         volumeMounts:
-          {{- if .Values.ydb.persistence.enabled }}
+          - name: ydb-uprn-auth
+            mountPath: "/extra_scripts/ADDWEBAUTH.m"
+            subPath: "ADDWEBAUTH.m"
+            readOnly: true
+          {{- if .Values.assign.persistence.enabled }}
           - name: data
             mountPath: /data
           {{- end }}
-          {{- with .Values.ydb.extraVolumeMounts }}
+          {{- with .Values.assign.extraVolumeMounts }}
           {{- toYaml . | nindent 10 }}
           {{- end }}
 
       volumes:
-        {{- if .Values.ydb.persistence.enabled }}
+        - name: ydb-uprn-auth
+          secret:
+            secretName: {{ include "assign.ydb.auth.secret" . }}
+        {{- if .Values.assign.persistence.enabled }}
         - name: data
           persistentVolumeClaim:
             claimName: ydb-data
         {{- end }}
-        {{- with .Values.ydb.extraVolumes }}
+        {{- with .Values.assign.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
 
-      {{- with .Values.ydb.nodeSelector }}
+      {{- with .Values.assign.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
 
-      {{- with .Values.ydb.tolerations }}
+      {{- with .Values.assign.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
 
-      {{- with .Values.ydb.affinity }}
+      {{- with .Values.assign.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
