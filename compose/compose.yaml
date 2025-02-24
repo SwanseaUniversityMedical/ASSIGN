@@ -1,8 +1,8 @@
 services:
   db:
-    image: assign-test-master:latest
+    image: assign-container:pr-8
     environment:
-      assign_sha: ""
+      assign_sha: "ebbee2f"
     ports:
       - "9080:9080"
       - "9081:9081"

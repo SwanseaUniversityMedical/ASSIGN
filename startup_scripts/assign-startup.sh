@@ -52,6 +52,7 @@ else
       echo "Import mumps code has changed, setting flag to trigger reload."
       reload_abp=true
     else
+      echo "Import mumps code has not changed."
       reload_abp=false
     fi
   fi
@@ -90,7 +91,7 @@ function load_abp_to_assign {
   echo "Removing old check files."; [ -e $abp_checksum ] && rm $abp_checksum; [ -e $ydb_checkfile ] && rm $ydb_checkfile
 
   # Reload
-  echo "Importing ABP from $abp_dir." && $ydb_dist/ydb -run %XCMD 'd IMPORT^UPRN1A("/data/ABP")'
+  echo "Importing ABP from $abp_dir." && $ydb_dist/ydb -run %XCMD 'd IMPORT^UPRN1A("/data/ABP")' && \
   echo "Ingest okay. Producing checkfile for ABP load." && echo $(date +%Y_%m_%d) > $ydb_checkfile && \
   echo "Producing checksum for $abp_dir." && calc_abp_checksum > $abp_checksum
   }
