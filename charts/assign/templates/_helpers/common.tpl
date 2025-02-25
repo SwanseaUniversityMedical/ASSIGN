@@ -8,6 +8,13 @@ Construct the `labels.chart` for used by all resources in this chart.
 {{/*
 Construct the name of the ydb auth secret.
 */}}
-{{- define "assign.ydb.auth.secret" -}}
-{{- printf "%s" (or .Values.assign.auth.secret "ydb-uprn-auth-secret") -}}
+{{- define "assign.auth.secret" -}}
+{{- printf "%s" (or .Values.assign.auth.secret "assign-uprn-auth-secret") -}}
+{{- end -}}
+
+{{/*
+Construct the name of the ydb data volume.
+*/}}
+{{- define "assign.persistence.volumeName" -}}
+{{- printf "%s" ("assign-data") -}}
 {{- end -}}

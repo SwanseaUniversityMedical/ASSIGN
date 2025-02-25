@@ -108,12 +108,12 @@ spec:
           {{- end }}
 
         volumeMounts:
-          - name: ydb-uprn-auth
+          - name: assign-uprn-auth
             mountPath: "/extra_scripts/ADDWEBAUTH.m"
             subPath: "ADDWEBAUTH.m"
             readOnly: true
           {{- if .Values.assign.persistence.enabled }}
-          - name: data
+          - name: assign-data
             mountPath: /data
           {{- end }}
           {{- with .Values.assign.extraVolumeMounts }}
@@ -121,13 +121,13 @@ spec:
           {{- end }}
 
       volumes:
-        - name: ydb-uprn-auth
+        - name: assign-uprn-auth
           secret:
-            secretName: {{ include "assign.ydb.auth.secret" . }}
+            secretName: {{ include "assign.auth.secret" . }}
         {{- if .Values.assign.persistence.enabled }}
-        - name: data
+        - name: assign-data
           persistentVolumeClaim:
-            claimName: ydb-data
+            claimName: {{ include "assign.persistence.volumeName" . }}
         {{- end }}
         {{- with .Values.assign.extraVolumes }}
         {{- toYaml . | nindent 8 }}

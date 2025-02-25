@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: assign-data
+  name: {{ include "assign.persistence.volumeName" . }}
 
   annotations:
     assign.ukserp.ac.uk/component: "ydb"
@@ -29,6 +29,7 @@ metadata:
 spec:
   volumeMode: Filesystem
 
+  volumeName: {{ include "assign.persistence.volumeName" . }}
   storageClassName: {{ .Values.assign.persistence.storageClassName }}
 
   resources:
