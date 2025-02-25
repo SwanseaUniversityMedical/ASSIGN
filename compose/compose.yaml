@@ -1,6 +1,6 @@
 services:
   db:
-    image: assign-test-master:latest
+    image: assign:1.0.0
     environment:
       assign_sha: ""
     ports:

@@ -68,7 +68,7 @@ function calc_abp_checksum { sha256sum $abp_dir/* | sha256sum | awk '{ print $1 
 function calc_ydb_checksum { sha256sum $ydb_gbldir | awk '{ print $1 }'; }
 
 function load_abp_to_assign {
-  echo "Importing ABP from $abp_dir." && $ydb_dist/ydb -run %XCMD 'd IMPORT^UPRN1A("/data/ABP")' && \
+  echo "Importing ABP from $abp_dir." && $ydb_dist/ydb -run %XCMD 'd IMPORT^UPRN1A("/data/ABP")'
   echo "Ingest okay. Producing checksum for $ydb_gbldir." && calc_ydb_checksum > $ydb_checksum && \
   echo "Producing checksum for $abp_dir." && calc_abp_checksum > $abp_checksum
   }
@@ -91,20 +91,29 @@ else
   echo "Checksums match, no need to reload."
 fi
 
-# Set the ybd env var for the TLS password hash, this can be replaced with an ENV var in the image?
-#export ydb_tls_passwd_dev="$($ydb_dist/plugin/ydbcrypt/maskpass <<< $cert_pass | cut -d ":" -f2 | tr -d ' ')"
 
-# Startup the ASSIGN TLS listener
-echo "Starting listener"
-yottadb -run %XCMD 'job START^VPRJREQ(9081)' &
+if [[ ! -f "$abp_checksum" || ! -f "$ydb_checksum" ]]; then
+  echo "Checksums are missing. Not starting ASSIGN web endpoint."
+else
+  if [ "$start_assign" == "true" ]; then
+    # Set the ybd env var for the TLS password hash, this can be replaced with an ENV var in the image?
+    #export ydb_tls_passwd_dev="$($ydb_dist/plugin/ydbcrypt/maskpass <<< $cert_pass | cut -d ":" -f2 | tr -d ' ')"
 
-# Startup the ASSIGN web API interface
-echo "Starting ASSIGN API endpoints"
-cp "/extra_scripts/ADDWEBAUTH.m" "$ydb_dir/$ydb_rel/r/ADDWEBAUTH.m"
-yottadb -run INT^VUE          # File upload/download
-yottadb -run SETUP^UPRNHOOK2  # UPRN retrieval
-yottadb -run ^NEL             # request handling
-yottadb -run ^ADDWEBAUTH      # Add creds
+    # Startup the ASSIGN web endpoint
+    echo "Starting listener"
+    yottadb -run %XCMD 'job START^VPRJREQ(9081)' &
+
+    # Startup the ASSIGN web API interface
+    echo "Starting ASSIGN API endpoints"
+    cp "/extra_scripts/ADDWEBAUTH.m" "$ydb_dir/$ydb_rel/r/ADDWEBAUTH.m"
+    yottadb -run INT^VUE          # File upload/download
+    yottadb -run SETUP^UPRNHOOK2  # UPRN retrieval
+    yottadb -run ^NEL             # request handling
+    yottadb -run ^ADDWEBAUTH      # Add creds
+  else
+    echo "Not starting ASSIGN web endpoint due to start_assign flag."
+  fi
+fi
 } &
 
 # Startup webgui.
