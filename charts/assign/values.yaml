@@ -12,7 +12,7 @@ assign:
 
   image:
     repository: "harbor.ukserp.ac.uk/linkage/assign"
-    tag: "pr-13"
+    tag: "1.1.0"
     imagePullSecrets: []
 
   port: 9081
