@@ -65,10 +65,25 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
 
+      initContainers:
+        - name: wait-for-data
+          image: busybox:1.28
+          command:
+          - 'sh'
+          - '-c'
+          - |
+            while [ -z "$( ls -A '/data' )" ]; do
+              echo "waiting for /data to be populated...";
+              sleep 2;
+            done
+            sleep 10;
+          volumeMounts:
+          - name: assign-data
+            mountPath: /data
+
       containers:
       - name: ydb
         image: "{{ .Values.assign.image.repository }}:{{ .Values.assign.image.tag }}"
-
 
         ports:
         - containerPort: {{ .Values.assign.port }}
