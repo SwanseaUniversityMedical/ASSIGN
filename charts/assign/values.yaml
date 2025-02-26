@@ -1,0 +1,95 @@
+
+annotations: {}
+labels: {}
+
+assign:
+  auth:
+    createSecret: true
+    username: assign
+    password: assign
+
+  sha:
+
+  image:
+    repository: "harbor.ukserp.ac.uk/linkage/assign"
+    tag: "1.1.0"
+    imagePullSecrets: []
+
+  port: 9081
+
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "250m"
+    limits:
+      memory: "256Mi"
+      cpu: "500m"
+
+  probes:
+    readiness:
+      enabled: true
+      path: "/"
+      initialDelaySeconds: 5
+      periodSeconds: 10
+    liveness:
+      enabled: true
+      path: "/"
+      initialDelaySeconds: 5
+      periodSeconds: 10
+
+  env:
+    - name: LOG_LEVEL
+      value: "info"
+
+  persistence:
+    # Create and mount a pvc for the /data directory
+    enabled: true
+    persistentVolumeReclaimPolicy: Retain
+    storageClassName: standard
+    capacity: 1Gi
+
+    persistentVolume:
+      annotations: {}
+      labels: {}
+
+    persistentVolumeClaim:
+      annotations: {}
+      labels: {}
+
+  extraVolumeMounts: []
+  extraVolumes: []
+
+  annotations: {}
+  labels: {}
+  podAnnotations: {}
+  podLabels: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+service:
+  port: 8080
+  annotations: {}
+  labels: {}
+
+ingress:
+  enabled: false
+  annotations: {}
+  labels: {}
+  ingressClassName: "nginx"
+  host: "assign.example.com"
+  tls:
+    enabled: false
+    secretName: assign-tls-secret
+
+networkPolicy:
+  enabled: false
+  annotations: {}
+  labels: {}
+
+  ingress:
+    matchLabels:
+      app.kubernetes.io/name: ingress-nginx
+
+# A list of strings that will be templated and then exported as individual manifests
+extraManifests: []

@@ -1,0 +1,166 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: assign
+
+  annotations:
+    assign.ukserp.ac.uk/component: "ydb"
+    {{- with .Values.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.assign.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+
+  labels:
+    component: ydb
+    role: main
+    app: {{ .Chart.Name }}
+    release: {{ .Release.Name }}
+    chart: {{ include "assign.labels.chart" . }}
+    heritage: {{ .Release.Service }}
+    {{- with .Values.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.assign.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+
+spec:
+
+  # Must be set to 1 for master ydb that will perform the ingest
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+      component: ydb
+
+  template:
+    metadata:
+      labels:
+        component: ydb
+        role: main
+        app: {{ .Chart.Name }}
+        release: {{ .Release.Name }}
+        {{- with .Values.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.assign.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+
+      annotations:
+        assign.ukserp.ac.uk/component: "ydb"
+        {{- with .Values.annotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.assign.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+
+    spec:
+      {{- with .Values.assign.image.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      initContainers:
+        - name: wait-for-data
+          image: busybox:1.28
+          command:
+          - 'sh'
+          - '-c'
+          - |
+            set -x
+            ls -la /data
+            until [ -z "$( ls -A '/data' )" ]; do
+              echo "waiting for /data to be populated...";
+              sleep 2;
+            done
+            sleep 10;
+          volumeMounts:
+          - name: assign-data
+            mountPath: /data
+
+      containers:
+      - name: ydb
+        image: "{{ .Values.assign.image.repository }}:{{ .Values.assign.image.tag }}"
+
+        ports:
+        - containerPort: {{ .Values.assign.port }}
+
+        {{- with .Values.assign.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+
+        {{- if .Values.assign.probes.readiness.enabled }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.assign.probes.readiness.path }}
+            port: {{ .Values.assign.port }}
+          initialDelaySeconds: {{ .Values.assign.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.assign.probes.readiness.periodSeconds }}
+        {{- end }}
+
+        {{- if .Values.assign.probes.liveness.enabled }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.assign.probes.liveness.path }}
+            port: {{ .Values.assign.port }}
+          initialDelaySeconds: {{ .Values.assign.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.assign.probes.liveness.periodSeconds }}
+        {{- end }}
+
+        env:
+          - name: LOG_LEVEL
+            value: "debug"
+          {{- with .Values.assign.sha }}
+          - name: assign_sha
+            value: "{{ . }}"
+          {{- end }}
+          {{- with .Values.assign.env }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+
+        volumeMounts:
+          - name: assign-uprn-auth
+            mountPath: "/extra_scripts/ADDWEBAUTH.m"
+            subPath: "ADDWEBAUTH.m"
+            readOnly: true
+          {{- if .Values.assign.persistence.enabled }}
+          - name: assign-data
+            mountPath: /data
+          {{- end }}
+          {{- with .Values.assign.extraVolumeMounts }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+
+      volumes:
+        - name: assign-uprn-auth
+          secret:
+            secretName: {{ include "assign.auth.secret" . }}
+        {{- if .Values.assign.persistence.enabled }}
+        - name: assign-data
+          persistentVolumeClaim:
+            claimName: {{ include "assign.persistence.volumeName" . }}
+        {{- end }}
+        {{- with .Values.assign.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+
+      {{- with .Values.assign.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.assign.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.assign.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

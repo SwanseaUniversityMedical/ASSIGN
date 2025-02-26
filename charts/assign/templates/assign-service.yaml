@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: assign
+
+  annotations:
+    assign.ukserp.ac.uk/component: "ydb"
+    {{- with .Values.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.service.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+
+  labels:
+    component: ydb
+    app: {{ .Chart.Name }}
+    release: {{ .Release.Name }}
+    chart: {{ include "assign.labels.chart" . }}
+    heritage: {{ .Release.Service }}
+    {{- with .Values.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.service.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+
+spec:
+  selector:
+    app: {{ .Chart.Name }}
+    component: ydb
+    # Will match role: main and worker
+
+  type: ClusterIP
+  sessionAffinity: None
+
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.assign.port }}
+      protocol: TCP
