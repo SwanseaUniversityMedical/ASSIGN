@@ -72,7 +72,9 @@ spec:
           - 'sh'
           - '-c'
           - |
-            while [ -z "$( ls -A '/data' )" ]; do
+            set -x
+            ls -la /data
+            until [ -z "$( ls -A '/data' )" ]; do
               echo "waiting for /data to be populated...";
               sleep 2;
             done
