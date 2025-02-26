@@ -29,7 +29,6 @@ metadata:
 spec:
   volumeMode: Filesystem
 
-  volumeName: {{ include "assign.persistence.volumeName" . }}
   storageClassName: {{ .Values.assign.persistence.storageClassName }}
 
   resources:
