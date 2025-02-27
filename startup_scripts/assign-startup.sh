@@ -2,6 +2,8 @@
 
 mkdir -p /data/logs
 
+git config --global --add safe.directory $assign_dest
+
 # Check if database file exists, if so try a rundown incase it was borked by container stopping
 if [ -f "$ydb_dir/$ydb_rel/g/yottadb.gld" ]; then
   echo "Running rundown to restore database."
