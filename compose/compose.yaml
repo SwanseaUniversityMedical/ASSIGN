@@ -1,8 +1,10 @@
 services:
   db:
-    image: assign-test-master:latest
+    image: assign:1.0.0
     environment:
       assign_sha: ""
+      start_assign: "false"
+      trigger_abp_load: "false"
     ports:
       - "9080:9080"
       - "9081:9081"

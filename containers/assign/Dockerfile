@@ -15,8 +15,9 @@ ENV assign_url="https://github.com/endeavourhealth-discovery/ASSIGN.git"
 ENV assign_dest="/data/ASSIGN"
 ENV assign_sha=""
 ENV abp_dir="/data/ABP"
-ENV abp_checksum="/data/abp_checksum"
-ENV ydb_checksum="/data/ydb_checksum"
+ENV abp_checkfile="$abp_dir/abp_checkfile"
+ENV trigger_abp_load="false"
+ENV start_assign="true"
 
 # YDB env vars
 ARG YDB_VERSION
