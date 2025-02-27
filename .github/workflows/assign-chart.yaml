@@ -1,23 +1,19 @@
-name: ASSIGN YDB Container
+name: ASSIGN Chart
 
 on:
   pull_request:
-    # Ignore PRs on branches specifically intended for other assets
-    branches-ignore: []
     # Only consider PRs that change files for this asset, including ci scripts
     paths:
-      - '.github/workflows/assign-container.yaml'
-      - 'containers/assign/**'
-      - 'startup_scripts/**'
+      - '.github/workflows/assign-chart.yaml'
+      - 'charts/assign/**'
   push:
     # Only release off of release and maintenance branches for this asset
     branches:
       - 'main'
     # Only consider pushes that change files for this asset, including ci scripts
     paths:
-      - '.github/workflows/assign-container.yaml'
-      - 'containers/assign/**'
-      - 'startup_scripts/**'
+      - '.github/workflows/assign-chart.yaml'
+      - 'charts/assign/**'
 
 permissions:
   contents: write
@@ -26,24 +22,29 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  # Needed to generate releases safely
+  # Cancel early on pull requests if new commits are added,
+  # Don't cancel on release pushes
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # Job name must be unique across repo to target
   # branch protection rules "required checks" properly!
-  assign-container:
-    uses: SwanseaUniversityMedical/workflows/.github/workflows/pr-and-release-container.yaml@v2.0.3-containers
+  assign-chart:
+    uses: SwanseaUniversityMedical/workflows/.github/workflows/pr-and-release-chart.yaml@v2.0.4-charts
     with:
-      job-name: assign-container
-      comment-pr: 'true'
+      job-name: assign-chart
+      comment-pr: "true"
+      comment-release: "true"
       registry: ${{ vars.HARBOR_REGISTRY }}
       registry-user: ${{ vars.HARBOR_USER }}
-      registry-repo: ${{ vars.HARBOR_PROJECT }}/assign
-      release-tag-format: 'v${version}-assign-container'
+      registry-project: ${{ vars.HARBOR_PROJECT }}
+      registry-repo: assign
+      release-tag-format: 'v${version}-assign-chart'
       cosign-public-key: ${{ vars.COSIGN_PUBLIC_KEY }}
-      build-file: containers/assign/Dockerfile
-      build-context: .
+      chart: charts/assign
+      test-command: |
+        helm template $CHART --debug
+
     secrets:
       cosign-private-key: ${{ secrets.COSIGN_PRIVATE_KEY }}
       cosign-password: ${{ secrets.COSIGN_PASSWORD }}
