@@ -98,7 +98,7 @@ function create_checkfile {
 function load_abp_to_assign {
   # Reload
   clear_checkfile
-  echo "Importing ABP from $abp_dir." && $ydb_dist/ydb -run %XCMD 'd IMPORT^UPRN1A("/data/ABP")'
+  echo "Importing ABP from $abp_dir." && $ydb_dist/ydb -run %XCMD 'd IMPORT^UPRN1A("/data/ABP")' && \
   echo "Ingest okay." && create_checkfile
   }
 
