@@ -8,6 +8,7 @@ on:
     paths:
       - '.github/workflows/assign-container.yaml'
       - 'containers/assign/**'
+      - 'startup_scripts/**'
   push:
     # Only release off of release and maintenance branches for this asset
     branches:
@@ -16,6 +17,7 @@ on:
     paths:
       - '.github/workflows/assign-container.yaml'
       - 'containers/assign/**'
+      - 'startup_scripts/**'
 
 permissions:
   contents: write
